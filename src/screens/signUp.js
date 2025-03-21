@@ -5,7 +5,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import IconGender from "react-native-vector-icons/MaterialCommunityIcons";
 import { User } from "../model/user";
 import { useNavigation } from "@react-navigation/native";
-import { addItem } from "../storage/database";
+import { addItem, setData } from "../storage/database";
 import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
 
 export default function SignUp() {
@@ -34,8 +34,9 @@ export default function SignUp() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
       if(userCredential !== null){
-        const userData = new User(userCredential.user.uid, name, surname, email, gender, password); 
-        await addItem("users", userData);
+        const user_id = userCredential.user.uid;
+        const userData = new User(user_id, name, surname, email, gender, password); 
+        await setData("users",userData, user_id,null);
   
         Alert.alert("Başarılı", "Kayıt başarıyla tamamlandı.");
         navigation.navigate("Login");
