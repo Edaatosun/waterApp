@@ -4,20 +4,21 @@ import { getAuth, signInWithEmailAndPassword} from "firebase/auth";
 import { useEffect, useState } from "react";
 import { Alert, Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
-import {getItem,getLastGoal,getSubCollectionData, updateSubCollectionData} from "../storage/database";
+import {fetchData, getItem,getLastAdd,updateItem} from "../storage/database";
 import { GoalModel } from "../model/goal";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [secureText, setSecureText] = useState(true);
+  const navigation = useNavigation();
 
-  const navigation = useNavigation()
+  
   useEffect(() => {
     const checkLoginStatus = async () => {
       const userSession = await AsyncStorage.getItem('userSession');
       if (userSession) {
-        console.log("kırmızıııııııııııııııı");
+        console.log("sesiionnnn");
         const session = JSON.parse(userSession);
         if (session.isLoggedIn) {
           const userId = session.userId; // session'dan userId'yi alıyoruz
@@ -25,24 +26,26 @@ export default function Login() {
           // Firestore'dan kullanıcıyı kontrol et
           const userDocRef = await getItem("users", userId); // "users" koleksiyonundaki ilgili belgeyi al
           if (userDocRef) {
-            console.log("sarıııııı");
-            // Kullanıcı Firestore'da mevcutsa, goals koleksiyonuna yönlendir
-            const doc = await getSubCollectionData("Amount", userId, "goals");
-            if (doc) {
-              console.log("sonnnn")
-              const lastDoc = await getLastGoal(userId);
-              console.log(lastDoc);
-              const currentTime = Date.now();
-              const resetAt = lastDoc.resetAt;
-              if (currentTime >= resetAt) {
-                const updateData = GoalModel(lastDoc.userId,lastDoc.amount,lastDoc.createdAt,lastDoc.resetAt,true);
-                await updateSubCollectionData("Amount",userId,"goals",lastDoc.id,updateData)
-                navigation.navigate("Goals");
-              } else {
-                console.log("Hoşgeldiniz");
-                Alert.alert("Başarılı", "Giriş başarılı.");
-                navigation.navigate("Drawer"); // Ana sayfaya yönlendirme
-              }
+            console.log("user Varr");
+            const docs = await fetchData("Amount",userId);
+            console.log(docs);
+            if (docs) {
+                console.log("userİdye ait hedef col. mevcutt")
+                console.log(docs);
+                const lastDoc = await getLastAdd("Amount",userId);
+                console.log(lastDoc);
+                const currentTime = Date.now();
+                const resetAt = lastDoc.resetAt;
+                if (currentTime >= resetAt) {
+                  const updateData = GoalModel(lastDoc.userId,lastDoc.amount,lastDoc.createdAt,lastDoc.resetAt,true);
+                  await updateItem("Amount",lastDoc.docId,updateData);
+                  console.log("güncellendiiii");
+                  navigation.navigate("Goals");
+                } else {
+                  console.log("Hoşgeldiniz");
+                  Alert.alert("Başarılı", "Giriş başarılı.");
+                  navigation.navigate("Drawer"); // Ana sayfaya yönlendirme
+                }
             } else {
               navigation.navigate("Goals");
             }
@@ -63,13 +66,10 @@ export default function Login() {
     }
   
     try {
-      const auth = getAuth();
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  
-      // Kullanıcı ID'sini almak ve AsyncStorage'a kaydetmek
-      const userId = userCredential.user.uid; // kullanıcı id'sini login işleminden alıyoruz
+      
       // Firestore'dan kullanıcıyı kontrol et
       const userDocRef = await getItem("users", userId); // "users" koleksiyonundaki ilgili belgeyi al
+
       if (userDocRef) {
         // Kullanıcı Firestore'da varsa giriş başarılı
         await AsyncStorage.setItem(
@@ -77,21 +77,25 @@ export default function Login() {
           JSON.stringify({ isLoggedIn: true, userId: userId })
         );
   
-        const doc = await getSubCollectionData("Amount", userId, "goals");
-        if (doc) {
-          const lastDoc = await getLastGoal(userId);
-          const currentTime = Date.now();
-          const resetAt = lastDoc.resetAt;
-          if (currentTime >= resetAt) {
-            navigation.navigate("Goals");
-          } else {
-            console.log("Hoşgeldiniz");
-            Alert.alert("Başarılı", "Giriş başarılı.");
-            navigation.navigate("Home"); // Ana sayfaya yönlendirme
-          }
+        const docs = await fetchData("Amount",userId);
+        if (docs) {
+            const lastDoc = await getLastAdd("Amount",userId);
+            const currentTime = Date.now();
+            const resetAt = lastDoc.resetAt;
+            if (currentTime >= resetAt) {
+              const updateData = GoalModel(lastDoc.userId,lastDoc.amount,lastDoc.createdAt,lastDoc.resetAt,true);
+              await updateItem("Amount",lastDoc.docId,updateData);
+              console.log("güncellendiiii");
+              navigation.navigate("Goals");
+            } else {
+              console.log("Hoşgeldiniz");
+              Alert.alert("Başarılı", "Giriş başarılı.");
+              navigation.navigate("Home"); // Ana sayfaya yönlendirme
+            }
         } else {
           navigation.navigate("Goals");
         }
+
       } else {
         // Kullanıcı Firestore'da yoksa giriş reddedilir
         Alert.alert("HATA", "Kullanıcı veritabanında bulunamadı. Lütfen tekrar deneyin.");

@@ -1,6 +1,6 @@
 import { Alert } from "react-native";
 import { db } from "../../firebase";
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, getDoc,setDoc, query, orderBy, limit } from "firebase/firestore";
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, getDoc,setDoc, query, orderBy, limit, where } from "firebase/firestore";
 
 /**
  * addDoc = ekleme işlemi
@@ -10,54 +10,65 @@ import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, getDoc,setDoc, 
  * getDoc = listeleme işlemi :  Sadece tek bir belgeyi alır.
  * doc = "users" koleksiyonunda "abc123" ID’li belgeyi temsil eder.
  */
+
+
 export async function addItem(collectionName, data) {
-  // console.log(data);
-  let string = JSON.stringify(data);
-  let newObj = JSON.parse(string);
+  let string = JSON.stringify(data)
+  let newObj = JSON.parse(string)
   try {
     const docRef = await addDoc(collection(db, collectionName),newObj);
   
     console.log("Document written with ID: ", docRef.id);
+    return true;
   } catch (e) {
     console.error("Error adding document: ", e);
-  }
-}
-// Veri ekleme/güncelleme fonksiyonu
-export const setData = async (collectionName, data, docNo, subCollection = null) => {
-  Alert.alert("Veri ekleniyor/güncelleniyor...");
-
-  try {
-    let string = JSON.stringify(data);
-    let newObj = JSON.parse(string);
-
-    // Eğer bir subCollection (alt koleksiyon) belirtilmişse, alt koleksiyona veri ekle
-    if (subCollection) {
-      const subCollectionRef = collection(db, collectionName, docNo, subCollection);
-      
-      // Eğer alt koleksiyon varsa, yeni hedef ekleyelim (addDoc kullanarak)
-      await addDoc(subCollectionRef, newObj);
-      Alert.alert("veri başarıyla eklendi!");
-    } else {
-      // Ana koleksiyon (users) için veri ekleyelim veya güncelleyelim
-      await setDoc(doc(db, collectionName, docNo), newObj);
-      console.log("Ana koleksiyona (users) veri başarıyla eklendi veya güncellendi!");
-    }
-
-  } catch (error) {
-    console.error('Veri ekleme/güncelleme hatası:', error);
+    return false;
   }
 };
+
+
+// // Veri ekleme/güncelleme fonksiyonu
+// export const setData = async (collectionName, data, docNo, subCollection = null) => {
+//   Alert.alert("Veri ekleniyor/güncelleniyor...");
+
+//   try {
+//     let string = JSON.stringify(data);
+//     let newObj = JSON.parse(string);
+
+//     // Eğer bir subCollection (alt koleksiyon) belirtilmişse, alt koleksiyona veri ekle
+//     if (subCollection) {
+//       const subCollectionRef = collection(db, collectionName, docNo, subCollection);
+      
+//       // Eğer alt koleksiyon varsa, yeni hedef ekleyelim (addDoc kullanarak)
+//       await addDoc(subCollectionRef, newObj);
+//       Alert.alert("veri başarıyla eklendi!");
+//     } else {
+//       // Ana koleksiyon (users) için veri ekleyelim veya güncelleyelim
+//       await setDoc(doc(db, collectionName, docNo), newObj);
+//       console.log("Ana koleksiyona (users) veri başarıyla eklendi veya güncellendi!");
+//     }
+
+//   } catch (error) {
+//     console.error('Veri ekleme/güncelleme hatası:', error);
+//   }
+// };
+
+
+
 // Veri güncelleme işlemi
 export const updateItem = async (collectionName, docNo, data) => {
+  let string = JSON.stringify(data)
+  let newObj = JSON.parse(string)
   try {
     // Belirtilen collection ve docNo'ya göre veri güncelleniyor
     const docRef = doc(db, collectionName, docNo);
-    await updateDoc(docRef, data);
+    await updateDoc(docRef, newObj);
     console.log('Veri başarıyla güncellendi!');
   } catch (error) {
     console.error('Veri güncelleme hatası:', error);
   }
 };
+
 
 // Belirli bir belgenin içindeki veriyi almak için
 export const getItem = async (collectionName, docNo) => {
@@ -78,6 +89,7 @@ export const getItem = async (collectionName, docNo) => {
 };
 
 // Bir koleksiyondaki tüm belgeleri almak
+//belli değill
 export const getAllItems = async (collectionName) => {
   try {
     const querySnapshot = await getDocs(collection(db, collectionName));
@@ -95,81 +107,62 @@ export const getAllItems = async (collectionName) => {
 };
 
 
+///////////////////////////////////////////////
+///yeni eklenen sorgu(Önemliiiii);
 
-//------ sub collection-----
-
-export const getSubCollectionData = async (collectionName, docNo, subCollection) => {
+export const fetchData = async (collectionName, userId) => {
   try {
-    // Alt koleksiyon referansını oluşturuyoruz
-    const subCollectionRef = collection(db, collectionName, docNo, subCollection);
-    
-    // Alt koleksiyonun içeriğini alıyoruz
-    const querySnapshot = await getDocs(subCollectionRef);
+    const q = query(collection(db, collectionName), where("user_id", "==", userId));
+    const querySnapshot = await getDocs(q);
 
-    if (!querySnapshot.empty) {
-      // Alt koleksiyonda belgeler mevcutsa, verileri alıyoruz
-      console.log(`${subCollection} alt koleksiyonunda belgeler bulundu:`);
-      
-      // Alt koleksiyonun içindeki her belgeye erişiyoruz ve verisini döndürüyoruz
-      const data = querySnapshot.docs.map(doc => ({
-        id: doc.id,  // Belgenin ID'sini almak
-        ...doc.data() // Belge verilerini almak
-      }));
-
-      return data;
-    } else {
-      // Alt koleksiyon boşsa, null döndürüyoruz
-      console.log(`${subCollection} alt koleksiyonunda veri bulunamadı.`);
+    // Eğer sorgu sonucu boşsa, null döndür
+    if (querySnapshot.empty) {
       return null;
     }
+
+    // Verileri diziye aktar
+    const data = [];
+    querySnapshot.forEach((doc) => {
+      data.push({ id: doc.id, ...doc.data() });
+    });
+
+    return data;
   } catch (error) {
-    console.error("Veri getirme hatası:", error);
+    console.error(`Firestore'dan veri çekerken hata oluştu (${collectionName}):`, error);
+    return [];
   }
 };
 
 
-//son eklenen kullanıcı hedefi için 
-export const getLastGoal = async (userId) => {
 
+export const getLastAdd = async (collectionName, userId) => {
   try {
-    // 'users' koleksiyonundaki 'userId' belgesinin altındaki 'goals' alt koleksiyonuna erişiyoruz
-    const subCollectionRef = collection(db, "Amount", userId, "goals");
-    console.log(subCollectionRef,"heyyyyyyy")
+    console.log("Sorgu başlatıldı...");
 
-    // Verileri 'createdAt' alanına göre azalan sırayla sıralıyoruz
-    const goalsQuery = query(subCollectionRef, orderBy("createdAt", "desc"), limit(1));
-    // Verileri alıyoruz
-    const querySnapshot = await getDocs(goalsQuery);
-    console.log(querySnapshot,"heyyyyyyy2")
+    const q = query(
+      collection(db, collectionName),
+      where("user_id", "==", userId), 
+      orderBy("createdAt", "desc"),
+      limit(1)
+    );
 
-    // Eğer veri varsa, en son eklenen hedefi döndürüyoruz
-    if (!querySnapshot.empty) {
-      const lastGoalDoc = querySnapshot.docs[0];
-      const lastGoal = { id: lastGoalDoc.id, ...lastGoalDoc.data() }; // ID’yi dahil et
-      console.log("En son eklenen hedef:", lastGoal);
-      return lastGoal;
-    } else {
-      console.log("Hiç hedef bulunamadı.");
+    const querySnapshot = await getDocs(q);
+    console.log("Sorgu sonucu:", querySnapshot);
+
+    // Eğer sonuç boşsa null döndür
+    if (querySnapshot.empty) {
+      console.log("Sonuç bulunamadı.");
       return null;
     }
+
+    // En son eklenen dokümanı al
+    const latestDoc = querySnapshot.docs[0];
+    return { docId: latestDoc.id, ...latestDoc.data() };
+
   } catch (error) {
-    console.error("Veri alma hatası:", error);
+    console.error("Son veriyi getirme hatası:", error);
+    return null;
   }
 };
 
-export const updateSubCollectionData = async (collectionName, docNo, subCollection, subDocId, updateData) => {
-  try {
-    // Güncellenecek belgeye referans al
-    const subDocRef = doc(db, collectionName, docNo, subCollection, subDocId);
-
-    // Belgeyi güncelle
-    await updateDoc(subDocRef, updateData);
-
-    console.log(`✅ ${subCollection}/${subDocId} güncellendi.`);
-    return true;
-  } catch (error) {
-    console.error("❌ Alt koleksiyon verisi güncellenirken hata:", error);
-    return false;
-  }
-};
 

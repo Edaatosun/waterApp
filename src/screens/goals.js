@@ -1,10 +1,10 @@
 import { useNavigation } from "@react-navigation/native";
 import { useState } from "react";
 import {TouchableOpacity, View, Text, Image } from "react-native";
-import IconMenu from "react-native-vector-icons/Ionicons";
 import { GoalModel } from "../model/goal"
-import {setData } from "../storage/database";
+import {addItem} from "../storage/database";
 import { auth } from "../../firebase";
+import { Alert } from "react-native";
 
 export default function Goals() {
     const [goal, setGoal] = useState(2000); // Başlangıç hedefi 2000 mL
@@ -13,23 +13,26 @@ export default function Goals() {
     const userId = user.uid;
 
     const addGoal = async () => {
-        console.log("kırmızıııııııııııııı");
+        console.log("goall ekleme fonskiyonundayımmmm");
         const createdAt = Date.now();
         const createdAtDate = new Date(createdAt);
         // Yalnızca yılı, ayı ve günü alarak gece 00:00'a sıfırla
         const resetAtDate = new Date(createdAtDate.getFullYear(), createdAtDate.getMonth(), createdAtDate.getDate() + 1); 
         console.log("heloooooooooo",resetAtDate);
         const resetAt = resetAtDate.getTime(); // Timestamp olarak al
-        const goalModal = new GoalModel(userId, goal, createdAt, resetAt, false);  // GoalModel'i doğru şekilde instantiate ediyoruz
+        const goalModal = new GoalModel(userId, goal, createdAt, resetAt, false);
     
-        console.log(goalModal);  // goalModal'ı loglayarak kontrol edebilirsiniz
-        await setData("Amount", goalModal,userId,"goals");
-        Alert.alert("Başarılı", "Hedef tanımlandı.");
-        navigation.navigate("Drawer");
+        console.log(goalModal); 
+        const success = await addItem("Amount",goalModal);
+        if(success){
+            Alert.alert("Başarılı", "Hedef tanımlandı.");
+            navigation.navigate("Drawer");
+        }
+        else{
+            console.log("hata");
+        }
+       
     }
-
-
-
     const increaseGoal = () => {
         if (goal < 5000) setGoal(goal + 250); // 250 mL artır
     };
