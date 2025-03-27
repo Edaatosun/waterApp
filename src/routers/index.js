@@ -1,7 +1,5 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-
 import React from 'react'
 import Login from '../screens/login';
 import SignUp from '../screens/signUp';
@@ -10,6 +8,7 @@ import DrawerMenu from '../components/drawerMenu';
 import 'react-native-gesture-handler';
 import { CupSelection } from '../screens/cupSelectionPage';
 import addCup from '../screens/addCupPage';
+
 const Stack = createNativeStackNavigator();
 
 export default function Index() {
@@ -22,9 +21,10 @@ export default function Index() {
         <Stack.Screen name="Drawer" component={DrawerMenu} /> 
         <Stack.Screen name="CupSelection" component={CupSelection} /> 
         <Stack.Screen name="AddCupPage" component={addCup} />
+        
 
       </Stack.Navigator>
 
     </NavigationContainer>
-  )
+  );
 }

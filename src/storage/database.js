@@ -57,6 +57,7 @@ export async function addItem(collectionName, data) {
 
 // Veri güncelleme işlemi
 export const updateItem = async (collectionName, docNo, data) => {
+  console.log("geldiii");
   let string = JSON.stringify(data)
   let newObj = JSON.parse(string)
   try {

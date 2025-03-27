@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { getAuth, signInWithEmailAndPassword} from "firebase/auth";
 import { useEffect, useState } from "react";
-import { Alert, Image, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import {fetchData, getItem,getLastAdd,updateItem} from "../storage/database";
 import { GoalModel } from "../model/goal";
@@ -11,6 +11,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [secureText, setSecureText] = useState(true);
+  const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
 
   
@@ -24,6 +25,7 @@ export default function Login() {
           const userId = session.userId; // session'dan userId'yi alıyoruz
           console.log("yeşil",userId);
           // Firestore'dan kullanıcıyı kontrol et
+          setLoading(true);
           const userDocRef = await getItem("users", userId); // "users" koleksiyonundaki ilgili belgeyi al
           if (userDocRef) {
             console.log("user Varr");
@@ -37,10 +39,14 @@ export default function Login() {
                 const currentTime = Date.now();
                 const resetAt = lastDoc.resetAt;
                 if (currentTime >= resetAt) {
-                  const updateData = GoalModel(lastDoc.userId,lastDoc.amount,lastDoc.createdAt,lastDoc.resetAt,true);
-                  await updateItem("Amount",lastDoc.docId,updateData);
-                  console.log("güncellendiiii");
-                  navigation.navigate("Goals");
+                  try {
+                    const updateData = new GoalModel(userId, lastDoc.amount, lastDoc.createdAt, lastDoc.resetAt, true);
+                    await updateItem("Amount", lastDoc.docId, updateData);
+                    console.log("güncellendiiii");
+                    navigation.navigate("Goals");
+                } catch (error) {
+                    console.error("Güncelleme sırasında hata oluştu:", error);
+                }
                 } else {
                   console.log("Hoşgeldiniz");
                   Alert.alert("Başarılı", "Giriş başarılı.");
@@ -64,6 +70,7 @@ export default function Login() {
     if (!email || !password) {
       return Alert.alert("HATA", "E-posta ve şifre boş olamaz.");
     }
+    setLoading(true);
   
     try {
       
@@ -114,6 +121,8 @@ export default function Login() {
       } else {
         Alert.alert("HATA", "Giriş yapılamadı. Lütfen tekrar deneyin.");
       }
+    }finally{
+      setLoading(false);
     }
   }
   
@@ -170,6 +179,13 @@ export default function Login() {
       >
         <Text className="text-white  text-lg">LOGIN</Text>
       </TouchableOpacity>
+
+      {loading&&(
+        <View style={{position:"absolute", top:0,left:0,bottom:0, right:0, flex:1,backgroundColor: 'rgba(0,0,0,0.25)', justifyContent:"center", alignItems:"center"}}>
+          <ActivityIndicator size={"large"} color={"#0000ff"} />
+        </View>
+        
+      )}
     </View>
   );
 }

@@ -1,10 +1,10 @@
 import { useNavigation } from "@react-navigation/native";
-import { Alert, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, Image, Modal, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import EditIcon from "react-native-vector-icons/AntDesign";
 import { useState } from "react";
 import { Cup } from "../model/cup";
-import {addItem} from "../storage/database";
+import { addItem } from "../storage/database";
 import { auth } from "../../firebase";
 
 
@@ -13,7 +13,9 @@ export default function AddCup() {
     const navigation = useNavigation();
     const [selectedCupIcon, setSelectedCupIcon] = useState("https://firebasestorage.googleapis.com/v0/b/waterapp-cd21d.firebasestorage.app/o/waterCupIcon%2F6.png?alt=media&token=b55c7334-8099-457c-b80b-aa32f349fa9f"); // Varsayılan bardak 200ml
     const [selectedCupml, setSelectedCupml] = useState(200); // Varsayılan bardak 200ml
-    const [cupName,setCupName] = useState("");
+    const [cupName, setCupName] = useState("");
+    const [editModalVisible, setEditModalVisible] = useState(false);
+    const [changeMl, setChangeMl] = useState(selectedCupml);
 
     const cupIcon = [
         { id: 1, name: "Water", ml: 100, url: "https://firebasestorage.googleapis.com/v0/b/waterapp-cd21d.firebasestorage.app/o/waterCupIcon%2F1.png?alt=media&token=32be6cac-19d8-41ca-b968-ec478ebf49d3" },
@@ -31,27 +33,28 @@ export default function AddCup() {
             Alert.alert("Tüm alanları doldurunuz !!!");
             return;
         }
-    
+
         try {
             const userId = auth.currentUser.uid;
             if (!userId) {
                 throw new Error("User is not logged in.");
             }
-    
+
             // Assuming Cup is a function that returns an object.
             const cupObj = new Cup(userId, selectedCupIcon, selectedCupml, cupName);
-    
-            await addItem("cups",cupObj);
-    
+
+            await addItem("cups", cupObj);
+
             Alert.alert("Başarılı");
-            navigation.navigate("Drawer");
-            
+            navigation.navigate("CupSelection");
+
         } catch (error) {
             console.error("Error in addCupFunction:", error); // More detailed error logging
             Alert.alert("Bir hata oluştu!", error.message || "Beklenmedik bir hata.");
         }
     };
-    
+
+
 
     return (
         <View className="h-full flex-1">
@@ -59,26 +62,27 @@ export default function AddCup() {
                 <TouchableOpacity onPress={() => navigation.goBack()}>
                     <Icon name="chevron-back-circle-outline" size={45} />
                 </TouchableOpacity>
-                
+
             </View>
-            <View style={{justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
                 <View className="flex-row items-center justify-center">
-                   
-                    <TextInput 
-                    className="text-lg  font-bold mb-5 border-b-2 rounded-xl h-[45] w-[260]"
-                    placeholder = "Bardak İsmi Giriniz🖋 "
-                    onChangeText = {setCupName}
+
+                    <TextInput
+                        className="text-lg  font-bold mb-5 border-b-2 rounded-xl h-[45] w-[260]"
+                        placeholder="Bardak İsmi Giriniz🖋 "
+                        onChangeText={setCupName}
                     />
                 </View>
                 <View style={styles.imageBorder}>
                     <Image
-                        style={{width: 80, height: 80, alignItems:"center", justifyContent:"center"}}
+                        style={{ width: 80, height: 80, alignItems: "center", justifyContent: "center" }}
                         source={{
                             uri: selectedCupIcon
                         }}
                     />
                 </View>
-                <TouchableOpacity className="flex-row p-5 w-[150] items-center justify-center border-2 border-blue-400 bg-blue-400 rounded-3xl mt-5">
+                <TouchableOpacity onPress={() => { setEditModalVisible(true); }}
+                    className="flex-row p-5 w-[150] items-center justify-center border-2 border-blue-400 bg-blue-400 rounded-3xl mt-5">
                     <Text className="text-lg font-bold text-white">{selectedCupml} ml </Text>
                     <EditIcon name="edit" size={25} color={"white"} />
                 </TouchableOpacity>
@@ -89,47 +93,86 @@ export default function AddCup() {
                 <View className="border-b-2 border-gray-400 w-[55%]" />
             </View>
             <FlatList
-          data={cupIcon}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={4}
-          renderItem={({ item }) => (
+                data={cupIcon}
+                keyExtractor={(item) => item.id.toString()}
+                numColumns={4}
+                renderItem={({ item }) => (
 
-            <TouchableOpacity
-            onPress={()=>{setSelectedCupIcon(item.url); setSelectedCupml(item.ml);}}
-                className="w-[80] h-[80] p-3 border rounded-full m-2 bg-[#E5F3F0] items-center justify-center">
-                <Image
-                    source={{ uri: item.url }}
-                    style={{ width: 30, height: 30, marginBottom: 5 ,color:"bg-[#E5F3F0]"}} 
-                    resizeMode="contain"/>
+                    <TouchableOpacity
+                        onPress={() => { setSelectedCupIcon(item.url); setSelectedCupml(item.ml); }}
+                        className="w-[80] h-[80] p-3 border rounded-full m-2 bg-[#E5F3F0] items-center justify-center">
+                        <Image
+                            source={{ uri: item.url }}
+                            style={{ width: 30, height: 30, marginBottom: 5, color: "bg-[#E5F3F0]" }}
+                            resizeMode="contain" />
 
-            </TouchableOpacity>
-            
-        )}>
+                    </TouchableOpacity>
 
-        </FlatList>
+                )}>
 
-        <View className="justify-end items-center mb-5">
+            </FlatList>
+
+            <View className="justify-end items-center mb-5">
                 <TouchableOpacity
-                onPress={() => { addCupFunction() }}
+                    onPress={() => { addCupFunction() }}
 
 
-                 className="justify-center items-center rounded-xl w-[85%] bg-blue-400 h-[50] ">
+                    className="justify-center items-center rounded-xl w-[85%] bg-blue-400 h-[50] ">
                     <Text className="text-white font-bold text-xl">Ekle</Text>
                 </TouchableOpacity>
             </View>
-      
+
+
+            <Modal
+                transparent={true}  // Arka planı saydam yapar
+                animationType="slide"
+                visible={editModalVisible}
+                onRequestClose={() => setEditModalVisible(false)}
+            >
+                {/* Dışarı tıklanınca modalı kapat */}
+                <TouchableWithoutFeedback onPress={() => setEditModalVisible(false)}>
+                    <View className="flex-1 justify-center items-center bg-black/50">
+
+                        {/* İçeriğe tıklanınca kapanmasını engellemek için */}
+                        <TouchableWithoutFeedback onPress={() => { }}>
+                            <View className="bg-white p-5 rounded-xl w-[85%] items-center">
+                                <TextInput
+                                    className="text-lg font-bold mb-5 border-b-2 rounded-xl h-[45] w-full p-2"
+                                    placeholder="ml belirleyiniz🖋 "
+                                    onChangeText={setChangeMl}
+                                    keyboardType="number-pad"
+                                />
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        setSelectedCupml(changeMl);
+                                        setEditModalVisible(false);
+                                    }}
+                                    className="justify-center items-center rounded-xl w-full bg-blue-400 h-[50]"
+                                >
+                                    <Text className="text-white font-bold">Tamam</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </TouchableWithoutFeedback>
+
+                    </View>
+                </TouchableWithoutFeedback>
+
+            </Modal>
+
 
         </View>
+
+
     );
 };
 
 const styles = StyleSheet.create({
-    imageBorder:{
+    imageBorder: {
         width: 150,
-        height: 150, 
-        borderRadius: 90, 
-        borderWidth: 2, 
-        borderColor: "gray", 
+        height: 150,
+        borderRadius: 90,
+        borderWidth: 2,
+        borderColor: "gray",
         alignItems: "center",
         justifyContent: "center",
     },

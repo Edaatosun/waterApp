@@ -6,4 +6,4 @@ export class Cup{
         this.name = name;
     }
 
-}
+};

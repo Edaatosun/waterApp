@@ -55,7 +55,7 @@ const ProgressCircle = ({ drink, amount }) => {
   
 
   return (
-    <View style={{ width: 240, height: 220, justifyContent: "center", alignItems: "center" }}>
+    <View style={{ width: 240, height: 220, justifyContent: "center", alignItems: "center" ,marginTop:20 }}>
       <AnimatedText
         style={{
           flex: 1,
