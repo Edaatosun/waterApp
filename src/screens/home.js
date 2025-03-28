@@ -6,11 +6,14 @@ import IconWater from "react-native-vector-icons/FontAwesome6"
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LogBox } from 'react-native';
 import { auth } from "../../firebase";
-import { addItem, getAllItems, getItem, getLastAdd } from "../storage/database";
+import { addItem, getItem, getLastAdd, queryGoalId, updateItem } from "../storage/database";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import RightIcon from "react-native-vector-icons/AntDesign"
 import { ScrollView } from "react-native-gesture-handler";
 import { DrinkWaterModel } from "../model/drinkWater";
+import { GoalModel } from "../model/goal";
+import { DailyProgressModel } from "../model/dailyProgressModel";
+import SeeAllHistoryPage from "./allHistoryPage";
 
 
 export default function Home() {
@@ -21,7 +24,6 @@ export default function Home() {
   const [drink, setDrink] = useState(0);// toplam içilen miktar
   const [amount, setAmount] = useState(2000);
   const navigation = useNavigation();
-  const [noHistoryMessage, setNoHistoryMessage] = useState(); // Görev yok mesajı için state
   const [historyObject, setHistoryObject] = useState();
   const [selectedCup, setSelectedCup] = useState({
     ml: 200,
@@ -29,6 +31,15 @@ export default function Home() {
     url: "https://firebasestorage.googleapis.com/v0/b/waterapp-cd21d.firebasestorage.app/o/waterCupIcon%2F3.png?alt=media&token=479d07e7-f10d-4dde-825a-4f854af595a4"
   }); //seçilen bardak (cup objesi)
   const userId = auth.currentUser.uid;
+  const [isEqual, setIsEqual] = useState(false);
+
+  useEffect(() => {
+    if (amount === drink) {
+      setIsEqual(true);
+    }
+
+  }, [amount, drink]); // drink veya amount değiştiğinde çalışacak
+
 
   useEffect(() => {
     const getAmount = async () => {
@@ -38,7 +49,8 @@ export default function Home() {
     };
     historyList();
     getAmount();
-  }, []);
+    isPrize();
+  }, [isEqual]);
 
   useFocusEffect( // burada ekran her açıldığında çalışmasını sağlayan fonk.
     React.useCallback(() => {
@@ -63,11 +75,11 @@ export default function Home() {
           }
         }
 
-
+        // içilen miktarı alıp getiriyordu.
         const savedDrink = await AsyncStorage.getItem("savedDrink");
         if (savedDrink) {
           const localSavedDrink = JSON.parse(savedDrink);
-          console.log(localSavedDrink);
+          console.log("kaydedildiiiiiiiiiiiiiiiii:", localSavedDrink);
           setDrink(localSavedDrink.savedDrink);
           console.log(drink);
         }
@@ -94,9 +106,13 @@ export default function Home() {
 
   const historyDrink = async () => {
     console.log("fonkk girildiii..");
+
     const createdAt = getCurrentTime();
     console.log(createdAt);
-    const drinkWater = new DrinkWaterModel(selectedCup, createdAt);
+    const lastGoal = await getLastAdd("Amount", userId);
+    console.log("geçmiş değerrrr", lastGoal);
+    console.log(lastGoal.goal_id);
+    const drinkWater = new DrinkWaterModel(selectedCup, createdAt, lastGoal.goal_id);
     const success = await addItem("drinkWater", drinkWater);
     if (success) {
       Alert.alert("Aferinn :)");
@@ -105,7 +121,7 @@ export default function Home() {
 
   };
 
-  const isEqual = amount === drink;
+
 
   //progress bilgisi için tuttuğumuz içilen miktar 
   const handleDrink = async () => {
@@ -123,14 +139,51 @@ export default function Home() {
 
 
   const historyList = async () => {
-
-    const success = await getAllItems("drinkWater",)
+    const lastGoal = await getLastAdd("Amount", userId);
+    console.log("geçmiş değerrrr", lastGoal);
+    console.log(lastGoal.goal_id);
+    const success = await queryGoalId("drinkWater", lastGoal.goal_id)
     if (success) {
       setHistoryObject(success);
       console.log("Geçmiş veriler başarılı şekilde alındı:", success);
     }
 
   };
+
+  const isPrize = async () => {
+    console.log("Prizeeeeeeeeeeeeeeeee");
+    if (isEqual) {
+      const lastGoal = await getLastAdd("Amount", userId);
+      const updateData = new GoalModel(userId, lastGoal.goal_id, lastGoal.amount, lastGoal.createdAt, lastGoal.resetAt, true);
+      const updatedData = await updateItem("Amount", lastGoal.docId, updateData);
+      if (updateData) {
+        console.log("güncellendiiii");
+        console.log("güncellenen hedef: ", updatedData);
+        const now = new Date();
+
+        // Haftanın gününü almak için
+        const days = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+        const dayName = days[now.getDay()];
+
+        // Tarih ve saat formatı
+        const date = `${dayName} - ${now.getDate().toString().padStart(2, '0')}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()} - ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+        console.log(date); // Örneğin: "Perşembe - 28.03.2025 - 11:49"
+
+        const data = new DailyProgressModel(userId, lastGoal.goal_id, date, drink);
+        const dailyProgressStored = await addItem("dailyProgressModel", data);
+        setDrink(0);
+        await AsyncStorage.setItem("savedDrink", JSON.stringify({ userId: userId, savedDrink: 0 }));
+        navigation.navigate("Prize");
+
+      }
+      else {
+        return;
+      }
+
+    }
+  };
+
 
   return (
     <SafeAreaView className="bg-gray-100">
@@ -160,7 +213,7 @@ export default function Home() {
 
           <View className="flex-row justify-center items-center mt-3">
             {/* Drink Butonu */}
-            <TouchableOpacity onPress={() => { handleDrink(); historyDrink(); historyList(); }}
+            <TouchableOpacity onPress={() => { handleDrink(); historyDrink(); historyList();  }}
               className="rounded-full py-2 px-16 bg-blue-600 items-center justify-center">
               <Text className="text-white text-lg">İçmek ({selectedCup.ml})</Text>
             </TouchableOpacity>
@@ -170,7 +223,7 @@ export default function Home() {
               onPress={() => navigation.navigate('CupSelection')}
               className="w-12 h-12 rounded-full border-2 border-gray-400 flex items-center justify-center ml-5">
               <Image
-                style={{ width: 30, height: 30, alignItems:"center", marginStart:2}}
+                style={{ width: 30, height: 30, alignItems: "center", marginStart: 2 }}
                 source={{ uri: selectedCup.url }}
               />
             </TouchableOpacity>
@@ -185,7 +238,7 @@ export default function Home() {
           {/* Head */}
           <View className="flex-row w-full justify-between">
             <Text className="text-xl font-bold">Geçmiş</Text>
-            <TouchableOpacity className="flex-row">
+            <TouchableOpacity onPress={()=>{navigation.navigate("AllHistoryPage")}} className="flex-row">
               <Text className="text-lg font-bold mr-2 text-blue-400">Tümünü Gör</Text>
               <RightIcon name="arrowright" size={30} color={"#60A5FA"} />
             </TouchableOpacity>
@@ -193,8 +246,17 @@ export default function Home() {
           <View className="border w-full mt-2 border-gray-400 opacity-30" />
 
           {historyObject && historyObject.length > 0 ? (
-            <ScrollView style={{ maxHeight: 220 }}>
-              {historyObject.map((item, index) => (
+            <ScrollView  showsVerticalScrollIndicator={false} 
+            style={{ maxHeight: 220 }}>
+              {historyObject
+            .sort((a, b) => {
+              const [hourA, minA] = a.drinkClock.split(':').map(Number);
+              const [hourB, minB] = b.drinkClock.split(':').map(Number);
+      
+              // Önce saatleri karşılaştır, eşitse dakikaları karşılaştır
+              return hourB - hourA || minB - minA; 
+            })
+            .map((item, index) =>(
                 <View key={index}>
                   <View className="flex-row items-center w-full min-h-[70] justify-between">
                     <View className="flex-row items-center justify-center">

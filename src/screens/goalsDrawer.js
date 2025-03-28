@@ -39,10 +39,12 @@ export default function GoalsDrawer() {
         try {
             const lastDoc = await getLastAdd("Amount", userId);
             if (lastDoc) {
-                const goalModal = new GoalModel(userId, goal, lastDoc.createdAt, lastDoc.resetAt, false);
+                const goalModal = new GoalModel(userId, lastDoc.goal_id,goal, lastDoc.createdAt, lastDoc.resetAt, false);
                 console.log(goalModal);
                 await updateItem("Amount", lastDoc.docId, goalModal);
+                navigation.navigate("Home");
                 Alert.alert("Başarılı", "Hedef güncellendi");
+                
             }
             else {
                 Alert.alert("hedef güncellenriken bir sourn oluştu!");

@@ -8,6 +8,9 @@ import DrawerMenu from '../components/drawerMenu';
 import 'react-native-gesture-handler';
 import { CupSelection } from '../screens/cupSelectionPage';
 import addCup from '../screens/addCupPage';
+import Prize from '../screens/prize';
+import AllHistoryPage from '../screens/allHistoryPage';
+import AllMyCupPage from '../screens/allMyCupPage';
 
 const Stack = createNativeStackNavigator();
 
@@ -21,6 +24,9 @@ export default function Index() {
         <Stack.Screen name="Drawer" component={DrawerMenu} /> 
         <Stack.Screen name="CupSelection" component={CupSelection} /> 
         <Stack.Screen name="AddCupPage" component={addCup} />
+        <Stack.Screen name = "Prize" component={Prize}/>
+        <Stack.Screen name = "AllHistoryPage" component={AllHistoryPage}/>
+        <Stack.Screen name='AllMyCupPage' component={AllMyCupPage}/>
         
 
       </Stack.Navigator>

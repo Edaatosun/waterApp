@@ -118,17 +118,24 @@ export function CupSelection() {
       <View className="w-full mt-4">
         <View className="flex-row w-full justify-between">
           <Text className="text-xl font-bold">Bardaklarım</Text>
-          <TouchableOpacity className="flex-row">
+          <TouchableOpacity onPress={()=>{navigation.navigate("AllMyCupPage")}} className="flex-row">
             <Text className="text-lg font-bold mr-2 text-blue-400">Tümünü Gör</Text>
             <RightIcon name="arrowright" size={30} color={"#60A5FA"} />
           </TouchableOpacity>
         </View>
         <View className="border w-full mt-2 border-gray-400 opacity-30" />
 
-        <ScrollView style={{ maxHeight: 220 }}>
-          {userCups.map((item, index) => ( // map item ml gibi değerleri tutar
+        <ScrollView  showsVerticalScrollIndicator={false} 
+        style={{ maxHeight: 220 }}>
+          {userCups.sort((a,b)=>{
+            const A = a.ml;
+            const B = b.ml;
+            return B-A;
+          })
+          .map((item, index) => ( // map item ml gibi değerleri tutar
             <View key={index}>
-              <View className="flex-row items-center w-full min-h-[70] justify-between">
+              <TouchableOpacity onPress={()=>{setMl(item.ml); setSelectedMl(item); navigation.goBack();}}
+              className="flex-row items-center w-full min-h-[70] justify-between">
                 <View className="flex-row items-center justify-center">
                   <View className="w-[70] items-center justify-center">
                     <Image
@@ -140,7 +147,7 @@ export function CupSelection() {
                   </View>
                 </View>
                 <Text className="text-lg font-bold p-5">{item.ml} mL</Text>
-              </View>
+              </TouchableOpacity>
               <View className="border w-full mt-2 border-gray-400 opacity-30" />
             </View>
           ))}

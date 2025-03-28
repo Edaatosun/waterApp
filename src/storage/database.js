@@ -64,9 +64,11 @@ export const updateItem = async (collectionName, docNo, data) => {
     // Belirtilen collection ve docNo'ya göre veri güncelleniyor
     const docRef = doc(db, collectionName, docNo);
     await updateDoc(docRef, newObj);
+    return true;
     console.log('Veri başarıyla güncellendi!');
   } catch (error) {
     console.error('Veri güncelleme hatası:', error);
+    return false;
   }
 };
 
@@ -114,6 +116,29 @@ export const getAllItems = async (collectionName) => {
 export const fetchData = async (collectionName, userId) => {
   try {
     const q = query(collection(db, collectionName), where("user_id", "==", userId));
+    const querySnapshot = await getDocs(q);
+
+    // Eğer sorgu sonucu boşsa, null döndür
+    if (querySnapshot.empty) {
+      return null;
+    }
+
+    // Verileri diziye aktar
+    const data = [];
+    querySnapshot.forEach((doc) => {
+      data.push({ id: doc.id, ...doc.data() });
+    });
+
+    return data;
+  } catch (error) {
+    console.error(`Firestore'dan veri çekerken hata oluştu (${collectionName}):`, error);
+    return [];
+  }
+};
+
+export const queryGoalId = async (collectionName, goalId) => {
+  try {
+    const q = query(collection(db, collectionName), where("goal_id", "==", goalId));
     const querySnapshot = await getDocs(q);
 
     // Eğer sorgu sonucu boşsa, null döndür

@@ -5,6 +5,7 @@ import { GoalModel } from "../model/goal"
 import {addItem} from "../storage/database";
 import { auth } from "../../firebase";
 import { Alert } from "react-native";
+import uuid from "react-native-uuid";
 
 export default function Goals() {
     const [goal, setGoal] = useState(2000); // Başlangıç hedefi 2000 mL
@@ -20,7 +21,8 @@ export default function Goals() {
         const resetAtDate = new Date(createdAtDate.getFullYear(), createdAtDate.getMonth(), createdAtDate.getDate() + 1); 
         console.log("heloooooooooo",resetAtDate);
         const resetAt = resetAtDate.getTime(); // Timestamp olarak al
-        const goalModal = new GoalModel(userId, goal, createdAt, resetAt, false);
+        const goal_id = uuid.v4();
+        const goalModal = new GoalModel(userId,goal_id, goal, createdAt, resetAt, false);
     
         console.log(goalModal); 
         const success = await addItem("Amount",goalModal);
