@@ -4,7 +4,7 @@ import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
-import { fetchData, getItem, getLastAdd, updateItem } from "../storage/database";
+import { addItem, fetchData, getItem, getLastAdd, updateItem } from "../storage/database";
 import { GoalModel } from "../model/goal";
 import { DailyProgressModel } from "../model/dailyProgressModel";
 
@@ -37,15 +37,16 @@ export default function Login() {
               console.log(docs);
               const lastDoc = await getLastAdd("Amount", userId);
               console.log(lastDoc);
+              console.log(lastDoc.docId);
               const currentTime = Date.now();
               const resetAt = lastDoc.resetAt;
               if (currentTime >= resetAt) {
                 try {
                   const updateData = new GoalModel(userId, lastDoc.goal_id, lastDoc.amount, lastDoc.createdAt, lastDoc.resetAt, true);
-                  const updatedData = await updateItem("Amount", lastDoc.docId, updateData);
+                  const updatedData2 = await updateItem("Amount", lastDoc.docId, updateData);
                   console.log("güncellendiiii");
-                  console.log("güncellenen hedef: ", updatedData)
-                  if (updateData) {
+                  console.log("güncellenen hedef: ", updatedData2)
+                  if (updatedData2) {
 
                     const now = new Date();
 
@@ -57,8 +58,11 @@ export default function Login() {
                     const date = `${dayName} - ${now.getDate().toString().padStart(2, '0')}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()} - ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
                     console.log(date); // Örneğin: "Perşembe - 28.03.2025 - 11:49"
+                    const drinkData = await AsyncStorage.getItem("savedDrink");
+                    const parsedDrink = drinkData ? JSON.parse(drinkData) : null;
+                    const drink = parsedDrink?.savedDrink || 0; // 0 fallback
 
-                    const data = new DailyProgressModel(userId, lastGoal.goal_id, date, drink);
+                    const data = new DailyProgressModel(userId, lastDoc.goal_id, date, drink);
                     const dailyProgressStored = await addItem("dailyProgressModel", data);
                     await AsyncStorage.setItem("savedDrink", JSON.stringify({ userId: userId, savedDrink: 0 }));
                     navigation.navigate("Goals");
@@ -126,8 +130,12 @@ export default function Login() {
               const date = `${dayName} - ${now.getDate().toString().padStart(2, '0')}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()} - ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
               console.log(date); // Örneğin: "Perşembe - 28.03.2025 - 11:49"
+              const drinkData = await AsyncStorage.getItem("savedDrink");
+              const parsedDrink = drinkData ? JSON.parse(drinkData) : null;
+              const drink = parsedDrink?.savedDrink || 0;
+              console.log(drink);
 
-              const data = new DailyProgressModel(userId, lastGoal.goal_id, date, drink);
+              const data = new DailyProgressModel(userId, lastDoc.goal_id, date, drink);
               const dailyProgressStored = await addItem("dailyProgressModel", data);
               await AsyncStorage.setItem("savedDrink", JSON.stringify({ userId: userId, savedDrink: 0 }));
               navigation.navigate("Goals");

@@ -63,9 +63,11 @@ export const updateItem = async (collectionName, docNo, data) => {
   try {
     // Belirtilen collection ve docNo'ya göre veri güncelleniyor
     const docRef = doc(db, collectionName, docNo);
+    
     await updateDoc(docRef, newObj);
-    return true;
     console.log('Veri başarıyla güncellendi!');
+    return true;
+    
   } catch (error) {
     console.error('Veri güncelleme hatası:', error);
     return false;
