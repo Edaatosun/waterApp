@@ -20,7 +20,9 @@ const duration = 2000;
 
 const ProgressCircle = ({ drink, amount }) => {
   const strokeOffset = useSharedValue(circumference);
-  const percentage = useDerivedValue(() => (drink / amount) * 100);
+  const percentage = useDerivedValue(() => {
+    return amount > 0 ? (drink / amount) * 100 : 0;  // Amount sıfırsa yüzdeyi 0 olarak kabul et
+  });
 
   useEffect(() => {
     strokeOffset.value = withTiming((1 - drink / amount) * circumference, { duration });

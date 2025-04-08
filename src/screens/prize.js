@@ -13,13 +13,15 @@ export default function Prize() {
             />
             <Text className="font-bold text-xl mt-5 ">Günlük Su Hedefini Tamamladın!!!! </Text>
             <Text className="font-bold text-xl ">Kutlarım </Text>
+            <Text className="mt-6 text-base">Tebrikler! Bugün su hedefini tamamladın! Devam et, sağlığın için harika bir adım
+            attın!</Text>
             <Text className="mt-6 text-base">Hedeflerini tamamlamaya devam et</Text>
-            <Text className=" text-base">yeni ödüller seni bekliyor </Text>
+            <Text className=" mt-6 text-base">yeni ödüller seni bekliyor </Text>
             <View className="justify-end flex-1 mb-5">
                 <View className="flex-row justify-between items-center">
-                    <TouchableOpacity onPress={()=>{navigation.navigate("Goals")}}
-                    className="bg-gray-100  p-5 items-center rounded-3xl mr-10">
-                        <Text className="text-blue-400">Yeni Hedef Belirle</Text>
+                    <TouchableOpacity onPress={()=>{navigation.goBack();}}
+                    className="bg-gray-100  p-5 items-center rounded-3xl mr-10 px-14">
+                        <Text className="text-blue-400">Geri</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity className=" bg-blue-400 w-50 p-5 items-center rounded-3xl ">

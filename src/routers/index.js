@@ -11,6 +11,7 @@ import addCup from '../screens/addCupPage';
 import Prize from '../screens/prize';
 import AllHistoryPage from '../screens/allHistoryPage';
 import AllMyCupPage from '../screens/allMyCupPage';
+import DetailsHistoryProgress from '../screens/detailsHistoryProgress';
 
 const Stack = createNativeStackNavigator();
 
@@ -27,7 +28,7 @@ export default function Index() {
         <Stack.Screen name = "Prize" component={Prize}/>
         <Stack.Screen name = "AllHistoryPage" component={AllHistoryPage}/>
         <Stack.Screen name='AllMyCupPage' component={AllMyCupPage}/>
-        
+        <Stack.Screen name='DetailsHistoryProgress' component={DetailsHistoryProgress}/>
 
       </Stack.Navigator>
 
