@@ -113,7 +113,6 @@ export const getAllItems = async (collectionName) => {
 
 
 ///////////////////////////////////////////////
-///yeni eklenen sorgu(Önemliiiii);
 
 export const fetchData = async (collectionName, userId) => {
   try {
