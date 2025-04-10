@@ -7,6 +7,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import { addItem, fetchData, getItem, getLastAdd, updateItem } from "../storage/database";
 import { GoalModel } from "../model/goal";
 import { DailyProgressModel } from "../model/dailyProgressModel";
+import IconRight from "react-native-vector-icons/Entypo"
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -18,7 +19,9 @@ export default function Login() {
 
   useEffect(() => {
     const checkLoginStatus = async () => {
+
       const userSession = await AsyncStorage.getItem('userSession');
+
       if (userSession) {
         console.log("sesiionnnn");
         const session = JSON.parse(userSession);
@@ -27,7 +30,7 @@ export default function Login() {
           console.log("yeşil", userId);
           // Firestore'dan kullanıcıyı kontrol et
           setLoading(true);
-          const userDocRef = await getItem("users", userId); // "users" koleksiyonundaki ilgili belgeyi al
+          const userDocRef = await fetchData("users", userId); // bu session bilgisine ait gerçek bir kullanıcı var mı?
           if (userDocRef) {
             console.log("user Varr");
             const docs = await fetchData("Amount", userId);
@@ -90,6 +93,8 @@ export default function Login() {
     }
     checkLoginStatus();
   }, []);
+  /////////////////////////////////
+
 
   const signIn = async () => {
     if (!email || !password) {
@@ -98,84 +103,107 @@ export default function Login() {
     setLoading(true);
 
     try {
+      const auth = getAuth();
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      const userId = user.uid; // Burada user.uid'yi alıyoruz
 
-      // Firestore'dan kullanıcıyı kontrol et
-      const userDocRef = await getItem("users", userId); // "users" koleksiyonundaki ilgili belgeyi al
+      // AsyncStorage'dan session'ı al ve güncelle
+      await AsyncStorage.setItem(
+        "userSession",
+        JSON.stringify({ isLoggedIn: true, userId: userId })
+      );
+      console.log("User session updated with userId:", userId); // Doğru şekilde kaydedildiğinden emin olun
 
+      // Firestore'dan kullanıcı verisini kontrol et
+      const userDocRef = await fetchData("users", userId);
       if (userDocRef) {
         // Kullanıcı Firestore'da varsa giriş başarılı
-        await AsyncStorage.setItem(
-          "userSession",
-          JSON.stringify({ isLoggedIn: true, userId: userId })
-        );
-
+        console.log("user varr");
         const docs = await fetchData("Amount", userId);
+        console.log(docs);
         if (docs) {
+          console.log("userİdye ait hedef col. mevcutt")
+          console.log(docs);
           const lastDoc = await getLastAdd("Amount", userId);
+          console.log(lastDoc);
+          console.log(lastDoc.docId);
           const currentTime = Date.now();
           const resetAt = lastDoc.resetAt;
           if (currentTime >= resetAt) {
-            const updateData = GoalModel(lastDoc.userId, lastDoc.goal_id, lastDoc.amount, lastDoc.createdAt, lastDoc.resetAt, true);
-            await updateItem("Amount", lastDoc.docId, updateData);
-            console.log("güncellendiiii");
-            if (updateData) {
+            try {
+              const updateData = new GoalModel(userId, lastDoc.goal_id, lastDoc.amount, lastDoc.createdAt, lastDoc.resetAt, true);
+              const updatedData2 = await updateItem("Amount", lastDoc.docId, updateData);
+              console.log("güncellendiiii");
+              console.log("güncellenen hedef: ", updatedData2)
+              if (updatedData2) {
 
-              const now = new Date();
+                const now = new Date();
 
-              // Haftanın gününü almak için
-              const days = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
-              const dayName = days[now.getDay()];
+                // Haftanın gününü almak için
+                const days = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+                const dayName = days[now.getDay()];
 
-              // Tarih ve saat formatı
-              const date = `${dayName} - ${now.getDate().toString().padStart(2, '0')}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()} - ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+                // Tarih ve saat formatı
+                const date = `${dayName} - ${now.getDate().toString().padStart(2, '0')}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()} - ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-              console.log(date); // Örneğin: "Perşembe - 28.03.2025 - 11:49"
-              const drinkData = await AsyncStorage.getItem("savedDrink");
-              const parsedDrink = drinkData ? JSON.parse(drinkData) : null;
-              const drink = parsedDrink?.savedDrink || 0;
-              console.log(drink);
+                console.log(date); // Örneğin: "Perşembe - 28.03.2025 - 11:49"
+                const drinkData = await AsyncStorage.getItem("savedDrink");
+                const parsedDrink = drinkData ? JSON.parse(drinkData) : null;
+                const drink = parsedDrink?.savedDrink || 0; // 0 fallback
 
-              const data = new DailyProgressModel(userId, lastDoc.goal_id, date, drink);
-              const dailyProgressStored = await addItem("dailyProgressModel", data);
-              await AsyncStorage.setItem("savedDrink", JSON.stringify({ userId: userId, savedDrink: 0 }));
-              navigation.navigate("Goals");
+                const data = new DailyProgressModel(userId, lastDoc.goal_id, date, drink);
+                const dailyProgressStored = await addItem("dailyProgressModel", data);
+                await AsyncStorage.setItem("savedDrink", JSON.stringify({ userId: userId, savedDrink: 0 }));
+                navigation.navigate("Goals");
+              }
 
+            } catch (error) {
+              console.error("Güncelleme sırasında hata oluştu:", error);
             }
           } else {
             console.log("Hoşgeldiniz");
             Alert.alert("Başarılı", "Giriş başarılı.");
-            navigation.navigate("Home"); // Ana sayfaya yönlendirme
+            navigation.navigate("Drawer"); // Ana sayfaya yönlendirme
           }
-        } else {
+
+        }
+        else {
           navigation.navigate("Goals");
         }
 
       } else {
-        // Kullanıcı Firestore'da yoksa giriş reddedilir
         Alert.alert("HATA", "Kullanıcı veritabanında bulunamadı. Lütfen tekrar deneyin.");
       }
     } catch (error) {
       console.error("Giriş Hatası:", error.message);
-
       if (error.code === "auth/user-not-found") {
         Alert.alert("HATA", "Kullanıcı bulunamadı.");
       } else if (error.code === "auth/wrong-password") {
         Alert.alert("HATA", "Yanlış şifre.");
-      } else if (error.code === "auth/invalid-email") {
-        Alert.alert("HATA", "Geçersiz e-posta adresi.");
-      } else if (error.code === "auth/invalid-credential") {
-        Alert.alert("HATA", "Kullanıcı adı veya şifre yanlış /n Lütfen tekrar deneyiniz");
       } else {
         Alert.alert("HATA", "Giriş yapılamadı. Lütfen tekrar deneyin.");
       }
     } finally {
       setLoading(false);
     }
-  }
+  };
+
+
 
   return (
     <View className="flex-1 justify-center items-center bg-gray-100 px-4">
+      <View className="absolute top-10 right-4 flex-row items-center">
+        <TouchableOpacity className="flex-row items-center"
+          onPress={() => navigation.navigate("SignUp")}>
+          <Text className="text-base mr-2 font-bold text-[#4E5496]">Kayıt Ol</Text>
+          <IconRight name="chevron-with-circle-right" size={40} color={"#4E5496"} />
+        </TouchableOpacity>
+      </View>
+
+
       <Image className="w-72 h-48 mb-6" source={require("../../assets/images/logo.png")} />
+      <Text className="mb-6 font-bold text-lg">Velora'ya Hoşgeldin</Text>
 
       {/* Email Input */}
       <TextInput
@@ -208,23 +236,16 @@ export default function Login() {
       {/* Forgot Password */}
       <View className="w-full max-w-sm mt-5">
         <TouchableOpacity>
-          <Text className="text-gray-600 opacity-50 text-right text-base">Forgot Password?</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Forgot Password */}
-      <View className="w-full max-w-sm mt-5">
-        <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
-          <Text className="text-gray-600 opacity-50 text-right text-base">KAYIT</Text>
+          <Text className="text-gray-600 opacity-50 text-right text-base">Şİfremi Unuttum?</Text>
         </TouchableOpacity>
       </View>
 
       {/* Login Butonu */}
       <TouchableOpacity
         onPress={signIn}
-        className="bg-[#4E5496] px-6 py-2 rounded-lg mt-4 w-full max-w-sm items-center"
+        className="bg-[#4E5496] px-6 py-2 rounded-lg mt-12 w-full max-w-sm items-center"
       >
-        <Text className="text-white  text-lg">LOGIN</Text>
+        <Text className="text-white  text-lg">GİRİŞ YAP</Text>
       </TouchableOpacity>
 
       {loading && (

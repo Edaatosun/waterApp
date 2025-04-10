@@ -31,67 +31,72 @@ export default function Home() {
   const [isEqual, setIsEqual] = useState(false); // hedef ve amount değerleri eşit mi diye kontrol ediyor.
   const [isButtonDisabled, setIsButtonDisabled] = useState(false); // drink butonunun disabled ayarlıyor.
 
-// amount ve completed için sayfa başlangıcı önemli veriler.////////
+  // amount ve completed için sayfa başlangıcı önemli veriler.////////
   useFocusEffect(
     React.useCallback(() => {
       const fetchDataAndCheckGoalStatus = async () => {
         const lastGoal = await getLastAdd("Amount", userId); // bugünün hedefini al
         if (lastGoal) {
           setAmount(lastGoal.amount); // hedefi setstate et.
-          
+
           // eğer içilen değer ve hedef eşit ve  hedef completed değilse
           if (amount === drink && !lastGoal.completed) {
             setIsEqual(true); // eşitliği true yap ve bu isprize ı çalıştıracak aslında.
-          } else if(amount === drink){
+          } else if (amount === drink) {
             setIsButtonDisabled(true); // sadece eşitlik bile olsa buton disabled yap.
           }
           else {
             setIsEqual(false); // hedef henüz tamamlanmadıysa ve eşit değilse eşitlik durumunu false yap.
           }
-          
+
           // durum ne olursa olsun prize forceLink. çağır.
           isPrize();
         }
       };
-  
+
       fetchDataAndCheckGoalStatus();
       historyList(); // her ekrana girildiğinde historyList listelenmeli.
     }, [amount, drink, isEqual]) // amount drink ve isEqual değerleri değişirse burdaki işlemleri tekrarla.
   );
-  
- //////////////////////////////
- //// burası da seçtiğimiz bardak ve kaydedilen içme değeri var toplam içilen miktar kaydediliyor.
-  useFocusEffect( 
+
+  //////////////////////////////
+  //// burası da seçtiğimiz bardak ve kaydedilen içme değeri var toplam içilen miktar kaydediliyor.
+  useFocusEffect(
     React.useCallback(() => {
       const getMlLocal = async () => {
         console.log("hayır burdayımm getMlLocal fonkkkk");
         const localCup = await AsyncStorage.getItem("localSelectedCup"); // seçilen cup değeri bunu localde tutuyoruz çünkü diğer taraftada setSelectedCup ı göndermek problem yaratıyor.
         if (localCup) {
-          try {
-            const selectedLocalCup = JSON.parse(localCup);
-
-            // Eğer veri doğru şekilde parse edildi ve ml değeri varsa
-            if (selectedLocalCup && selectedLocalCup.ml) {
-              console.log("Seçilen bardak ml değeri:", selectedLocalCup.ml);
-              setSelectedCup(selectedLocalCup);
-            } else {
-              console.log("Geçersiz bardak verisi, varsayılan bardak atandı.");
+          const selectedLocalCup = JSON.parse(localCup);
+          if(selectedLocalCup.user_id===userId){
+            try {
+              // Eğer veri doğru şekilde parse edildi ve ml değeri varsa
+              if (selectedLocalCup && selectedLocalCup.ml) {
+                console.log("Seçilen bardak ml değeri:", selectedLocalCup.ml);
+                setSelectedCup(selectedLocalCup);
+              } else {
+                console.log("Geçersiz bardak verisi, varsayılan bardak atandı.");
+                setSelectedCup({ ml: 200, name: "Varsayılan Bardak" }); // Varsayılan değer
+              }
+            } catch (error) {
+              console.error("JSON Parse Hatası:", error);
               setSelectedCup({ ml: 200, name: "Varsayılan Bardak" }); // Varsayılan değer
             }
-          } catch (error) {
-            console.error("JSON Parse Hatası:", error);
-            setSelectedCup({ ml: 200, name: "Varsayılan Bardak" }); // Varsayılan değer
+
           }
+         
         }
 
         // içilen miktarı alıp getiriyordu.
         const savedDrink = await AsyncStorage.getItem("savedDrink");
         if (savedDrink) {
           const localSavedDrink = JSON.parse(savedDrink);
-          console.log("kaydedildiiiiiiiiiiiiiiiii:", localSavedDrink);
+          if(localSavedDrink.userId===userId){
+            console.log("kaydedildiiiiiiiiiiiiiiiii:", localSavedDrink);
           setDrink(localSavedDrink.savedDrink);
           console.log(localSavedDrink.savedDrink); // direkt olarak drink yazsaydık eğer 
           // setState işlemleri asenkron çalışıyor eski değeri verebilir o yüzden güncel veriyi bu şekilde logluyoruz
+          }
         }
         else {
           return;
@@ -103,7 +108,7 @@ export default function Home() {
     }, [])
   );
   /////////////////////////////////////////
-//// history için gerekli fonk.///////
+  //// history için gerekli fonk.///////
   const getCurrentTime = () => {
     const now = new Date();
     let hours = now.getHours();
@@ -127,12 +132,12 @@ export default function Home() {
     const drinkWater = new DrinkWaterModel(selectedCup, createdAt, lastGoal.goal_id);
     const success = await addItem("drinkWater", drinkWater);
     if (success) {
-      Alert.alert("Aferinn :)");
+      Alert.alert("Harika!\nHedefe bir adım daha yaklaştın!");
       console.log("su içildi aferinnn şak şak şak");
     }
 
   };
- /// geçmişi listelemek için fonk.
+  /// geçmişi listelemek için fonk.
   const historyList = async () => {
     const lastGoal = await getLastAdd("Amount", userId);
     console.log(lastGoal.goal_id);
@@ -143,7 +148,7 @@ export default function Home() {
     }
 
   };
-/////////////////////////////////////
+  /////////////////////////////////////
   //progress bilgisi için tuttuğumuz içilen miktar 
   const handleDrink = async () => {
     // Yeni drink miktarını hesapla
@@ -161,29 +166,29 @@ export default function Home() {
 
   /////////////////////////
 
-// ödül alacak mı fonk.////
-const isPrize = async () => {
-  console.log("Prizeeeeeeeeeeeeeeeee");
-  if (isEqual) { 
-    setIsButtonDisabled(true); 
-    const lastGoal = await getLastAdd("Amount", userId); 
-    const now = new Date();
-    const days = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
-    const dayName = days[now.getDay()];
-    const date = `${dayName} - ${now.getDate().toString().padStart(2, '0')}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()} - ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    console.log(date); //  "Perşembe - 28.03.2025 - 11:49"
-    // Create DailyProgressModel with the drink amount
-    const data = new DailyProgressModel(userId, lastGoal.goal_id, date, drink);
-    const dailyProgressStored = await addItem("dailyProgressModel", data); 
-    if (dailyProgressStored) {
-      navigation.navigate("Prize");
-    } else {
-      console.log("Error saving daily progress.");
+  // ödül alacak mı fonk.////
+  const isPrize = async () => {
+    console.log("Prizeeeeeeeeeeeeeeeee");
+    if (isEqual) {
+      setIsButtonDisabled(true);
+      const lastGoal = await getLastAdd("Amount", userId);
+      const now = new Date();
+      const days = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+      const dayName = days[now.getDay()];
+      const date = `${dayName} - ${now.getDate().toString().padStart(2, '0')}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()} - ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      console.log(date); //  "Perşembe - 28.03.2025 - 11:49"
+      // Create DailyProgressModel with the drink amount
+      const data = new DailyProgressModel(userId, lastGoal.goal_id, date, drink);
+      const dailyProgressStored = await addItem("dailyProgressModel", data);
+      if (dailyProgressStored) {
+        navigation.navigate("Prize");
+      } else {
+        console.log("Error saving daily progress.");
+      }
     }
-  }
-};
+  };
 
- 
+
 
 
   return (
@@ -243,60 +248,60 @@ const isPrize = async () => {
       </View>
 
       <View className="justify-center items-center mt-10">
-          <View className="w-[95%] bg-white rounded-xl p-5  shadow-md pb-5">
-            {/* Head  */}
-            <View className="flex-row w-full justify-between">
-              <Text className="text-xl font-bold">Geçmiş</Text>
-              <TouchableOpacity onPress={() => { navigation.navigate("AllHistoryPage") }} className="flex-row">
-                <Text className="text-lg font-bold mr-2 text-blue-400">Tümünü Gör</Text>
-                <RightIcon name="arrowright" size={30} color={"#60A5FA"} />
-              </TouchableOpacity>
-            </View>
-            <View className="border w-full mt-2 border-gray-400 opacity-30" />
-  
-            {historyObject && historyObject.length > 0 ? (
-              <ScrollView showsVerticalScrollIndicator={false}
-                style={{ maxHeight: 220 }}>
-                {historyObject
-                  .sort((a, b) => {
-                    const [hourA, minA] = a.drinkClock.split(':').map(Number);
-                    const [hourB, minB] = b.drinkClock.split(':').map(Number);
-  
-                    // Önce saatleri karşılaştır, eşitse dakikaları karşılaştır
-                    return hourB - hourA || minB - minA;
-                  })
-                  .map((item, index) => (
-                    <View key={index}>
-                      <View className="flex-row items-center w-full min-h-[70] justify-between">
-                        <View className="flex-row items-center justify-center">
-                          <View className="w-[70] items-center justify-center">
-                            <Image
-                              style={{ width: 40, height: 40 }}
-                              source={{ uri: item.Cup.url }}
-                            />
-                          </View>
-                          <View>
-                            <Text className="text-lg font-bold">Water</Text>
-                            <Text className="align-bottom">{item.drinkClock}</Text>
-                          </View>
-                        </View>
-                        <Text className="text-lg font-bold p-5">{item.Cup.ml} mL</Text>
-                      </View>
-                      <View className="border w-full mt-2 border-gray-400 opacity-30" />
-                    </View>
-                  ))}
-              </ScrollView>
-            ) : (
-              <View className="justify-center items-center">
-                <Image className="w-[100] h-[210]" source={require("../../assets/images/noDoc.png")} />
-                <Text className="text-gray-400 text-lg font-bold">Geçmişiniz bulunmamaktadır.</Text>
-              </View>
-            )}
+        <View className="w-[95%] bg-white rounded-xl p-5  shadow-md pb-5">
+          {/* Head  */}
+          <View className="flex-row w-full justify-between">
+            <Text className="text-xl font-bold">Geçmiş</Text>
+            <TouchableOpacity onPress={() => { navigation.navigate("AllHistoryPage") }} className="flex-row">
+              <Text className="text-lg font-bold mr-2 text-blue-400">Tümünü Gör</Text>
+              <RightIcon name="arrowright" size={30} color={"#60A5FA"} />
+            </TouchableOpacity>
           </View>
-        </View>
-  
+          <View className="border w-full mt-2 border-gray-400 opacity-30" />
 
-      
+          {historyObject && historyObject.length > 0 ? (
+            <ScrollView showsVerticalScrollIndicator={false}
+              style={{ maxHeight: 220 }}>
+              {historyObject
+                .sort((a, b) => {
+                  const [hourA, minA] = a.drinkClock.split(':').map(Number);
+                  const [hourB, minB] = b.drinkClock.split(':').map(Number);
+
+                  // Önce saatleri karşılaştır, eşitse dakikaları karşılaştır
+                  return hourB - hourA || minB - minA;
+                })
+                .map((item, index) => (
+                  <View key={index}>
+                    <View className="flex-row items-center w-full min-h-[70] justify-between">
+                      <View className="flex-row items-center justify-center">
+                        <View className="w-[70] items-center justify-center">
+                          <Image
+                            style={{ width: 40, height: 40 }}
+                            source={{ uri: item.Cup.url }}
+                          />
+                        </View>
+                        <View>
+                          <Text className="text-lg font-bold">Water</Text>
+                          <Text className="align-bottom">{item.drinkClock}</Text>
+                        </View>
+                      </View>
+                      <Text className="text-lg font-bold p-5">{item.Cup.ml} mL</Text>
+                    </View>
+                    <View className="border w-full mt-2 border-gray-400 opacity-30" />
+                  </View>
+                ))}
+            </ScrollView>
+          ) : (
+            <View className="justify-center items-center">
+              <Image className="w-[100] h-[210]" source={require("../../assets/images/noDoc.png")} />
+              <Text className="text-gray-400 text-lg font-bold">Geçmişiniz bulunmamaktadır.</Text>
+            </View>
+          )}
+        </View>
+      </View>
+
+
+
 
     </SafeAreaView>
 

@@ -192,4 +192,29 @@ export const getLastAdd = async (collectionName, userId) => {
   }
 };
 
+export const queryCompleted = async (collectionName, isCompleted) => {
+  try {
+    const q = query(collection(db, collectionName), where("completed", "==", isCompleted));
+    const querySnapshot = await getDocs(q);
+
+    // Eğer sorgu sonucu boşsa, null döndür
+    if (querySnapshot.empty) {
+      return null;
+    }
+
+    // Verileri diziye aktar birden fazla veri olacak çünkü.
+    const data = [];
+    querySnapshot.forEach((doc) => {
+      data.push({ id: doc.id, ...doc.data() });
+    });
+
+    return data;
+  } catch (error) {
+    console.error(`Firestore'dan veri çekerken hata oluştu (${collectionName}):`, error);
+    return [];
+  }
+};
+
+
+
 

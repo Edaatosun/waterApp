@@ -1,7 +1,7 @@
 // UserModel.js
 export class User {
-    constructor(id,name, surname, email, gender, password) {
-      this.id = id,
+    constructor(user_id,name, surname, email, gender, password) {
+      this.user_id = user_id,
       this.name = name;
       this.surname = surname;
       this.email = email;
