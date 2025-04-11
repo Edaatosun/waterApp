@@ -46,14 +46,14 @@ export function CupSelection() {
 
 
   const [cupOptions, setCupOptions] = useState([
-    { id: 1, name: "Su(Varsayılan)", ml: 100, url: "https://firebasestorage.googleapis.com/v0/b/waterapp-cd21d.firebasestorage.app/o/waterCupIcon%2F1.png?alt=media&token=32be6cac-19d8-41ca-b968-ec478ebf49d3" },
-    { id: 2, name: "Su(Varsayılan)", ml: 125, url: "https://firebasestorage.googleapis.com/v0/b/waterapp-cd21d.firebasestorage.app/o/waterCupIcon%2F7.png?alt=media&token=870c8f99-1357-4bc9-9c31-fe0dc11b535f" },
-    { id: 3, name: "Su(Varsayılan)", ml: 150, url: "https://firebasestorage.googleapis.com/v0/b/waterapp-cd21d.firebasestorage.app/o/waterCupIcon%2F9.png?alt=media&token=391cb867-7510-42f5-bba2-7e926a636a9b" },
-    { id: 4, name: "Su(Varsayılan)", ml: 200, url: "https://firebasestorage.googleapis.com/v0/b/waterapp-cd21d.firebasestorage.app/o/waterCupIcon%2F6.png?alt=media&token=b55c7334-8099-457c-b80b-aa32f349fa9f" },
+    { id: 1, name: "Su(Varsayılan)", ml: 100, url: "https://firebasestorage.googleapis.com/v0/b/waterapp-cd21d.firebasestorage.app/o/waterCupImage%2F1.png?alt=media&token=12c38275-dc31-4640-a752-2cb157bc5d9c" },
+    { id: 2, name: "Su(Varsayılan)", ml: 125, url: "https://firebasestorage.googleapis.com/v0/b/waterapp-cd21d.firebasestorage.app/o/waterCupImage%2F2.png?alt=media&token=d55dcb01-a6af-4473-b4bb-f98512236cfa" },
+    { id: 3, name: "Su(Varsayılan)", ml: 150, url: "https://firebasestorage.googleapis.com/v0/b/waterapp-cd21d.firebasestorage.app/o/waterCupImage%2F9.png?alt=media&token=939329a7-eaa8-4504-8b23-6fbdce4fd1eb" },
+    { id: 4, name: "Su(Varsayılan)", ml: 200, url: "https://firebasestorage.googleapis.com/v0/b/waterapp-cd21d.firebasestorage.app/o/waterCupImage%2F6.png?alt=media&token=03dbd746-864a-4f86-9624-342c56855a83" },
     { id: 5, name: "Su(Varsayılan)", ml: 250, url: "https://firebasestorage.googleapis.com/v0/b/waterapp-cd21d.firebasestorage.app/o/waterCupIcon%2F3.png?alt=media&token=479d07e7-f10d-4dde-825a-4f854af595a4" },
     { id: 6, name: "Su(Varsayılan)", ml: 300, url: "https://firebasestorage.googleapis.com/v0/b/waterapp-cd21d.firebasestorage.app/o/waterCupIcon%2F8.png?alt=media&token=4072279a-f33e-4a0a-8f75-fd3526cd5034" },
-    { id: 7, name: "Su(Varsayılan)", ml: 400, url: "https://firebasestorage.googleapis.com/v0/b/waterapp-cd21d.firebasestorage.app/o/waterCupIcon%2F5.png?alt=media&token=f1bbc105-2c50-41c9-be43-a75e0b634deb" },
-    { id: 8, name: "Su(Varsayılan)", ml: 500, url: "https://firebasestorage.googleapis.com/v0/b/waterapp-cd21d.firebasestorage.app/o/waterCupIcon%2F10.png?alt=media&token=161701cf-a7b5-498b-9571-09d62fb144a5" },
+    { id: 7, name: "Su(Varsayılan)", ml: 400, url: "https://firebasestorage.googleapis.com/v0/b/waterapp-cd21d.firebasestorage.app/o/waterCupImage%2F5.png?alt=media&token=e1013965-9d6b-4588-a99e-094bcfbc9ba0" },
+    { id: 8, name: "Su(Varsayılan)", ml: 500, url: "https://firebasestorage.googleapis.com/v0/b/waterapp-cd21d.firebasestorage.app/o/waterCupImage%2F10.png?alt=media&token=fb2f0d7c-be8a-4273-a52c-df172e933d2f" },
     { id: 9, name: "Ekle" },
   ]);
   
